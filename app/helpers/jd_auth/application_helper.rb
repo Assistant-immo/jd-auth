@@ -18,8 +18,13 @@ module JdAuth
         return false
       end
 
-      response.set_header("Authorization-Role", @jd_auth_current_user.role)
-      response.set_header("Access-Control-Expose-Headers", "Authorization-Role")
+      if Rails::VERSION::MAJOR >= 5
+        response.set_header("Authorization-Role", @jd_auth_current_user.role)
+        response.set_header("Access-Control-Expose-Headers", "Authorization-Role")
+      else
+        response.headers["Authorization-Role"] = @jd_auth_current_user.role
+        response.headers["Access-Control-Expose-Headers"] = "Authorization-Role"
+      end
       true
     end
 

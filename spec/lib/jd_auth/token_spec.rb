@@ -7,7 +7,7 @@ describe JdAuth::Token do
     before do
       ENV['JD_AUTH_ENCRYPTION_KEY'] = SecureRandom.hex(64)
       def encrypt token_info
-        encrypter = OpenSSL::Cipher::Cipher.new('aes-256-cbc').encrypt
+        encrypter = OpenSSL::Cipher.new('aes-256-cbc').encrypt
         encrypter.key = Digest::SHA256.digest(ENV['JD_AUTH_ENCRYPTION_KEY'])
         Base64.encode64(encrypter.update(token_info.to_s) + encrypter.final)
       end

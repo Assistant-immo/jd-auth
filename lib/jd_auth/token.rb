@@ -10,7 +10,7 @@ module JdAuth
       raise JdAuth::Errors::InvalidTokenError unless encrypted_json_token_info
 
       begin
-        decrypter = OpenSSL::Cipher::Cipher.new('aes-256-cbc').decrypt
+        decrypter = OpenSSL::Cipher.new('aes-256-cbc').decrypt
         decrypter.key = Digest::SHA256.digest(ENV['JD_AUTH_ENCRYPTION_KEY'])
         json_token_info = decrypter.update(Base64.decode64(encrypted_json_token_info.to_s)) + decrypter.final
       rescue

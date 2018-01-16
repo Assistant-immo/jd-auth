@@ -5,7 +5,7 @@ end
 
 ENV['RAILS_ENV'] ||= 'test'
 
-require "action_controller/railtie"
+require 'action_controller/railtie'
 require 'rspec/rails'
 
 require 'combustion'

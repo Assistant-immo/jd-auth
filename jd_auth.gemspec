@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec-rails'
   s.add_development_dependency 'combustion'
-  s.add_development_dependency "simplecov"
+  s.add_development_dependency 'simplecov'
 
   s.test_files = Dir["spec/**/*"]
 end
