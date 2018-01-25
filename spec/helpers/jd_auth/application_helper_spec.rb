@@ -104,12 +104,14 @@ describe JdAuth::ApplicationHelper do
         it "should return false and render error" do
           res = double("response")
           expect(res).to receive(:set_header).with("Authorization-Role", "user")
-          expect(res).to receive(:set_header).with("Access-Control-Expose-Headers", "Authorization-Role")
+          expect(res).to receive(:set_header).with("Authorization-Identifier", "bob@doe.com")
+          expect(res).to receive(:set_header).with("Access-Control-Expose-Headers", "Authorization-Role, Authorization-Identifier")
 
           expect(JdAuth::Token).to receive(:validate).with("abcd").and_return({
-              role: 'user'
+              role: 'user',
+              user_email: 'bob@doe.com'
                                                                               })
-          expect(dummy_controller).to receive(:response).twice.and_return(res)
+          expect(dummy_controller).to receive(:response).exactly(3).times.and_return(res)
 
           expect(dummy_controller.jd_auth_authenticate).to eq(true)
         end
