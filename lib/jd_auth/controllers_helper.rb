@@ -60,7 +60,7 @@ module JdAuth
           session.merge!({KEY_TOKEN => params[PARAM_TOKEN]})
           redirect remove_token_param_from_url(request.url)
         else
-          resp = jd_auth_backend_authenticate session, request.remote_ip, only_roles
+          resp = jd_auth_backend_authenticate session, request.ip, only_roles
 
           if resp == RESPONSE_FETCH_TOKEN
             redirect "#{JdAuth.configuration.host}/public_api/v1/authentication_tokens/new?application_resource_id=#{JdAuth.configuration.application_resource_id}&url=#{request.url}"
