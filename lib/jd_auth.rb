@@ -1,7 +1,9 @@
-require "jd_auth/engine"
 require 'jd_auth/configuration'
 require 'jd_auth/errors'
 require 'jd_auth/token'
+require 'jd_auth/controllers_helper'
+require 'jd_auth/authenticated_user'
+
 
 require 'redis'
 
@@ -27,7 +29,7 @@ module JdAuth
   class Railtie < Rails::Railtie
     initializer "jd_auth.action_controller" do
       ActiveSupport.on_load(:action_controller) do
-        include JdAuth::ApplicationHelper
+        include JdAuth::ControllersHelper
       end
     end
   end

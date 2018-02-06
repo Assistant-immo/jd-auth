@@ -1,5 +1,5 @@
 module JdAuth
-  module ApplicationHelper
+  module ControllersHelper
 
     KEY_TOKEN = 'jd_auth_token'
     KEY_FETCHING_TOKEN = 'jd_auth_fetching_token'
@@ -15,14 +15,14 @@ module JdAuth
     def jd_auth_authenticate
       begin
         token = (/Token (?<token>.*)/.match("#{request.headers["Authorization"]}") || {})['token']
-        @jd_auth_current_user = OpenStruct.new(JdAuth::Token.validate(token))
+        @jd_auth_current_user = JdAuth::Token.validate(token, request.remote_ip)
         unless @jd_auth_current_user.role
           render json: {
               message: 'Forbidden'
           }, status: 403
           return false
         end
-      rescue JdAuth::Errors::NoTokenError, JdAuth::Errors::InvalidTokenError, JdAuth::Errors::ExpiredTokenError
+      rescue JdAuth::Errors::NoTokenError, JdAuth::Errors::InvalidTokenError, JdAuth::Errors::ExpiredTokenError, JdAuth::Errors::InvalidIpForTokenError
         render json: {
             message: 'Invalid authentication',
             code: "please_request_new_token"
@@ -32,11 +32,11 @@ module JdAuth
 
       if Rails::VERSION::MAJOR >= 5
         response.set_header("Authorization-Role", @jd_auth_current_user.role)
-        response.set_header("Authorization-Identifier", @jd_auth_current_user.user_email)
+        response.set_header("Authorization-Identifier", @jd_auth_current_user.email)
         response.set_header("Access-Control-Expose-Headers", "Authorization-Role, Authorization-Identifier")
       else
         response.headers["Authorization-Role"] = @jd_auth_current_user.role
-        response.headers["Authorization-Identifier"] = @jd_auth_current_user.user_email
+        response.headers["Authorization-Identifier"] = @jd_auth_current_user.email
         response.headers["Access-Control-Expose-Headers"] = "Authorization-Role, Authorization-Identifier"
       end
       true
@@ -46,7 +46,7 @@ module JdAuth
       @jd_auth_current_user
     end
 
-    def jd_auth_only_roles roles
+    def jd_auth_only_roles(roles)
       roles.include?(@jd_auth_current_user.role)
     end
 
@@ -58,11 +58,9 @@ module JdAuth
 
         if params[PARAM_TOKEN]
           session.merge!({KEY_TOKEN => params[PARAM_TOKEN]})
-          uri = URI.parse(request.url)
-          uri.query = ""
-          redirect uri
+          redirect remove_token_param_from_url(request.url)
         else
-          resp = jd_auth_backend_authenticate session, only_roles
+          resp = jd_auth_backend_authenticate session, request.remote_ip, only_roles
 
           if resp == RESPONSE_FETCH_TOKEN
             redirect "#{JdAuth.configuration.host}/public_api/v1/authentication_tokens/new?application_resource_id=#{JdAuth.configuration.application_resource_id}&url=#{request.url}"
@@ -73,7 +71,7 @@ module JdAuth
       end
     end
 
-    def jd_auth_backend_authenticate(session, only_roles=nil)
+    def jd_auth_backend_authenticate(session, origin_ip, only_roles=nil)
       token = session.fetch(KEY_TOKEN, nil)
 
       if token.blank?
@@ -83,7 +81,7 @@ module JdAuth
 
       token_is_valid = false
       begin
-        @jd_auth_current_user = OpenStruct.new(JdAuth::Token.validate(token))
+        @jd_auth_current_user = JdAuth::Token.validate(token, origin_ip)
 
         if @jd_auth_current_user.role.blank? || (only_roles && !only_roles.include?(@jd_auth_current_user.role))
           return RESPONSE_UNAUTHORIZED
@@ -106,6 +104,14 @@ module JdAuth
           return RESPONSE_FETCH_TOKEN
         end
       end
+    end
+
+    private
+
+    def remove_token_param_from_url url
+      uri = URI.parse(url)
+      uri.query = Rack::Utils.parse_query(uri.query).except("token").to_query
+      uri.to_s
     end
 
   end
