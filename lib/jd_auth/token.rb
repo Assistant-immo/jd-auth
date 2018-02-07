@@ -27,9 +27,10 @@ module JdAuth
         raise JdAuth::Errors::InvalidTokenError unless token_info[param_key]
       end
 
-      if origin_ip
-        raise JdAuth::Errors::InvalidIpForTokenError unless token_info['origin_ip'] == origin_ip
-      end
+      # Dont check IP as network is not properly set up yet
+      # if origin_ip
+      #  raise JdAuth::Errors::InvalidIpForTokenError unless token_info['origin_ip'] == origin_ip
+      # end
 
       begin
         validity_start = DateTime.parse(token_info['validity_start'])
