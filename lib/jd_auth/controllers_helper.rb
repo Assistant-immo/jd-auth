@@ -91,10 +91,7 @@ module JdAuth
     end
 
     def jd_auth_go_to_login(redirect_url=nil)
-      login_url = JdAuth.login_url(redirect_url.present? ? redirect_url : request.url, true)
-      #google_account_chooser_url = "https://accounts.google.com/AccountChooser?continue=https://appengine.google.com/_ah/logout?continue=#{login_url}"
-
-      redirect_to google_account_chooser_url
+      redirect_to JdAuth.login_url(redirect_url.present? ? redirect_url : request.url, true)
     end
 
     def jd_auth_backend_authenticate(session, origin_ip, only_roles=nil)
