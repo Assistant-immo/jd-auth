@@ -63,12 +63,38 @@ module JdAuth
           resp = jd_auth_backend_authenticate session, request.ip, only_roles
 
           if resp == RESPONSE_FETCH_TOKEN
-            redirect "#{JdAuth.configuration.host}/public_api/v1/authentication_tokens/new?application_resource_id=#{JdAuth.configuration.application_resource_id}&url=#{request.url}"
+            redirect JdAuth.login_url(request.url)
           elsif resp == RESPONSE_UNAUTHORIZED
             halt 401, "Not authorized\n"
           end
         end
       end
+    end
+
+    def jd_auth_authenticate_server
+      if params[PARAM_TOKEN]
+        session.merge!({KEY_TOKEN => params[PARAM_TOKEN]})
+        redirect_to remove_token_param_from_url(request.url)
+        return false
+      else
+        resp = jd_auth_backend_authenticate session, request.ip, nil
+
+        if resp == RESPONSE_FETCH_TOKEN
+          redirect_to JdAuth.login_url(request.url)
+          return false
+        elsif resp == RESPONSE_UNAUTHORIZED
+          render "Not authorized\n", status: 401
+          return false
+        end
+      end
+      true
+    end
+
+    def jd_auth_go_to_login(redirect_url=nil)
+      login_url = JdAuth.login_url(redirect_url.present? ? redirect_url : request.url, true)
+      #google_account_chooser_url = "https://accounts.google.com/AccountChooser?continue=https://appengine.google.com/_ah/logout?continue=#{login_url}"
+
+      redirect_to google_account_chooser_url
     end
 
     def jd_auth_backend_authenticate(session, origin_ip, only_roles=nil)
@@ -110,7 +136,7 @@ module JdAuth
 
     def remove_token_param_from_url url
       uri = URI.parse(url)
-      uri.query = Rack::Utils.parse_query(uri.query).except("token").to_query
+      uri.query = Rack::Utils.parse_query(uri.query).except("token").except("application_resource_id").to_query
       uri.to_s
     end
 
