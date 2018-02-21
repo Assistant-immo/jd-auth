@@ -95,7 +95,7 @@ module JdAuth
     end
 
     def jd_auth_backend_authenticate(session, origin_ip, only_roles=nil)
-      token = session.fetch(KEY_TOKEN, nil)
+      token = session.fetch(KEY_TOKEN)
 
       if token.blank?
         session.merge!({KEY_FETCHING_TOKEN => true})
@@ -119,7 +119,7 @@ module JdAuth
         session.delete(KEY_FETCHING_TOKEN)
         return RESPONSE_SUCCESS
       else
-        if session.fetch(KEY_FETCHING_TOKEN, false)
+        if session.fetch(KEY_FETCHING_TOKEN)
           session.delete(KEY_FETCHING_TOKEN)
           return RESPONSE_UNAUTHORIZED
         else
