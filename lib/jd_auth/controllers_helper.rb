@@ -83,7 +83,7 @@ module JdAuth
           redirect_to JdAuth.login_url(request.url)
           return false
         elsif resp == RESPONSE_UNAUTHORIZED
-          render "Not authorized\n", status: 401
+          render plain: "Not authorized\n", status: 401
           return false
         end
       end
