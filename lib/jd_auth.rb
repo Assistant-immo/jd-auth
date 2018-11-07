@@ -25,8 +25,12 @@ module JdAuth
     raise JdAuth::Errors::RedisNotConfiguredError unless self.configuration.redis_url.present?
     unless @redis
       if self.configuration.redis_sentinels.present?
+        host, port = self.configuration.redis_sentinels.split(':')
         sentinel = /(?<host>.*)\:(?<port>[0-9]+)/.match(self.configuration.redis_sentinels).named_captures.symbolize_keys
-        @redis = Redis.new(url: self.configuration.redis_url, sentinels: [sentinel], role: :slave)
+        @redis = Redis.new(url: self.configuration.redis_url, sentinels: [{
+          host: host,
+          port: port.to_i
+          }], role: :slave)
       else
         @redis = Redis.new(url: self.configuration.redis_url)
       end
